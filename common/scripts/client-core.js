@@ -99,15 +99,30 @@ function defineTupukEvents() {
     }
 
     function tupuk_show_popup() {
+        /*
         if(document.getElementById("tupuk-sample-widget-container")){
             document.getElementById("tupuk-sample-widget-container").style.display = 'block'
+        }
+        */
+       
+        var els = document.getElementsByClassName("tupuk-blog-page-container");
+        
+        for (var i = 0; i < els.length; i++) {
+            els[i].style.display = "block";
         }
         
     }
 
     function tupuk_hide_popup() {
+        /*
         if(document.getElementById("tupuk-sample-widget-container")){
             document.getElementById("tupuk-sample-widget-container").style.display = 'none'
+        }
+        */
+        var els = document.getElementsByClassName("tupuk-blog-page-container");
+        
+        for (var i = 0; i < els.length; i++) {
+            els[i].style.display = "none";
         }
     }
 }

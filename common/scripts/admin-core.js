@@ -1,42 +1,64 @@
-angular.module("tupukAdmin", ["ui.bootstrap", "ngAnimate", "base64", "formly", "formlyBootstrap","toggle-switch"])
+console.log('injecting dependencies')
+angular.module("tupukAdmin", ["ui.bootstrap", "ngAnimate", "base64", "formly", "formlyBootstrap", "toggle-switch"])
 
+console.log('injected')
 angular.module("tupukAdmin")
-    .controller("tupukAdminController", ['$scope', '$http', '$base64', function($scope, $http, $base64) {
-
+    .controller("tupukAdminController", ['$scope', '$http', '$base64', '$sce', function($scope, $http, $base64, $sce) {
+        //1. load scope variables from saved option variables
         $scope.widgetActive = tupuk_widget_active
 
-        $scope.$watch('widgetActive',function(){
+        if (tupuk_widget_settings && tupuk_widget_settings.length > 0) {
+            $scope.settings = angular.fromJson($base64.decode(tupuk_widget_settings))
+        } else {
+            $scope.settings = {}
+        }
+
+        //2. load config.json variables on to scope
+        $http.get(plugin_path + '/widget/config.json')
+            .then(function(res) {
+                $scope.widgetFields = res.data.fields
+                $scope.widgetDetails = res.data.widget
+            })
+
+        //3. setup general settings defined below, which are common for all tupuk widgets
+        $scope.general = general_settings_fields
+
+        //4. Watch for scope variable changes and save them to the options text boxes
+        $scope.$watch('widgetActive', function() {
             document.getElementById('widget_active_field').checked = $scope.widgetActive
         })
 
-        if(tupuk_widget_settings && tupuk_widget_settings.length > 0){
-            $scope.settings = angular.fromJson($base64.decode(tupuk_widget_settings))
-        }else{
-            $scope.settings = {}
-        }
-        
-        $scope.general = general_settings_fields
-
-        //Watch settings, if anything changes, encode and put it in the text box
         $scope.$watch('settings', function() {
-                //set the actual trigger event based in the selected value
-                if ($scope.settings.general && $scope.settings.general.trigger) {
-                    $scope.settings.trigger_event = 'tupuk_' + $scope.settings.general.trigger
-                    if ($scope.settings.general.trigger == 'elapsed') {
-                        $scope.settings.trigger_event = $scope.settings.trigger_event + '_' + $scope.settings.general.elapsed
-                    }
+            //set the actual trigger event based in the selected value
+            if ($scope.settings.general && $scope.settings.general.trigger) {
+                $scope.settings.trigger_event = 'tupuk_' + $scope.settings.general.trigger
+                if ($scope.settings.general.trigger == 'elapsed') {
+                    $scope.settings.trigger_event = $scope.settings.trigger_event + '_' + $scope.settings.general.elapsed
                 }
+            }
 
-                
-                document.getElementById('widget_settings_field').value = $base64.encode(angular.toJson($scope.settings))
-            }, true)
 
-            //get the config fields for the widget here
-            //these are stored in config.json
-        $http.get(tupuk_plugin_path + '/widget/config.json')
-            .then(function(res) {
-                $scope.widgetFields = res.data
-            })
+            document.getElementById('widget_settings_field').value = $base64.encode(angular.toJson($scope.settings))
+        }, true)
+
+        //5. define variables and functions that can be used within the templates
+       
+        $scope.plugin_path = plugin_path
+
+        $scope.layoutTemplateUrl = function(layout) {
+            return plugin_path + '/widget/layouts/' + layout + '/' + layout + '-template.php'
+        }
+
+        //6. Retrieved saved templates
+        $scope.encodedTemplates = getEncodedLayoutTemplates($base64)
+        $scope.layoutTemplates = {}
+        for(var key in $scope.encodedTemplates){
+            $scope.layoutTemplates[key] = $base64.decode($scope.encodedTemplates[key])
+        }
+
+        $scope.layoutTemplate = function(layout) {
+            return $sce.trustAsHtml($base64.decode($scope.encodedTemplates[layout]))
+        }
     }])
 
 //Define editable directive
@@ -46,7 +68,7 @@ angular.module("tupukAdmin")
         return {
             restrict: 'A',
             controller: function($scope, $element, $modal, $base64) {
-                console.log('inside editable directive')
+
                 $element.on('mouseover', function() {
                     $element.addClass('tupuk-highlight')
                 })
@@ -83,17 +105,59 @@ angular.module("tupukAdmin")
                     modalInstance.result.then(function(inner) {
                         console.log('New Inner Text- ' + inner)
                         $element.html(inner)
-                        
-                        //Encode the updated template and put it in the widget_template_field text box
-                        var updated_template = document.getElementById("tupuk-sample-widget-container").outerHTML
-                        console.log(updated_template)
 
-                        document.getElementById("widget_template_field").value = $base64.encode(updated_template)
+                        //Encode the updated template and put it in the widget_template_field text box
+                        console.log('container_id- ' + container_id)
+                        var current_layout = $scope.settings.layout
+                        var updated_template = document.getElementById(container_id).outerHTML
+
+                        saveLayoutTemplate($scope.settings.layout, updated_template, $base64)
+
                     })
                 })
             }
         }
     })
+
+function getEncodedLayoutTemplates(base64Service) {
+    var saved_encoded_templates = document.getElementById("widget_template_field").value
+    var template_json = {}
+
+    if (saved_encoded_templates) {
+        template_json = angular.fromJson(base64Service.decode(saved_encoded_templates))
+    }
+
+    return template_json
+}
+
+function saveLayoutTemplate(layout, template, base64Service) {
+    var template_json = getEncodedLayoutTemplates(base64Service)
+    template_json[layout] = base64Service.encode(template)
+    document.getElementById("widget_template_field").value = base64Service.encode(angular.toJson(template_json))
+}
+
+angular.module("tupukAdmin")
+    .directive('bindHtmlCompile', ['$compile', function($compile) {
+        return {
+            restrict: 'A',
+            link: function(scope, element, attrs) {
+                scope.$watch(function() {
+                    return scope.$eval(attrs.bindHtmlCompile);
+                }, function(value) {
+                    // Incase value is a TrustedValueHolderType, sometimes it
+                    // needs to be explicitly called into a string in order to
+                    // get the HTML string.
+                    element.html(value && value.toString());
+                    // If scope is provided use it, otherwise use parent scope
+                    var compileScope = scope;
+                    if (attrs.bindHtmlScope) {
+                        compileScope = scope.$eval(attrs.bindHtmlScope);
+                    }
+                    $compile(element.contents())(compileScope);
+                });
+            }
+        };
+    }]);
 
 var general_settings_fields = [{
     key: "trigger",

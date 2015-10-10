@@ -3,7 +3,7 @@
         "layouts":["side-slider","centered"],
         "default_layout":"side-slider"
     },
-    "setup": [{
+    "fields": [{
         "key": "yesaction",
         "type": "radio",
         "templateOptions": {
