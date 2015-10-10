@@ -1,3 +1,16 @@
 #tupuk-yes-no-popup-container{
 	color:green;
+	width: 400px;
+	height: 300px;
+	position: absolute;
+    top:0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+	background-color: white;
+	margin-top: 10%;
+	-webkit-box-shadow: 0px 0px 8px 4px rgba(0,0,0,0.24);
+	-moz-box-shadow: 0px 0px 8px 4px rgba(0,0,0,0.24);
+	box-shadow: 0px 0px 8px 4px rgba(0,0,0,0.24);
 }
