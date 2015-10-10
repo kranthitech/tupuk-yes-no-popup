@@ -1,0 +1,44 @@
+{
+    "widget": {
+        "layouts":["side-slider","centered"],
+        "default_layout":"side-slider"
+    },
+    "setup": [{
+        "key": "yesaction",
+        "type": "radio",
+        "templateOptions": {
+            "label": "What happens when the visitor clicks the Yes button?",
+            "options": [{
+                "name": "Redirect to Another Page",
+                "value": "redirect"
+            }, {
+                "name": "Ask for the visitor's email address",
+                "value": "email"
+            }]
+        }
+    }, {
+        "key": "url",
+        "type": "input",
+        "templateOptions": {
+            "type": "url",
+            "label": "Where should the visitor be redirected?",
+            "placeholder": "http://xyz.com/abc"
+        },
+        "hideExpression": "(model.yesaction != 'redirect')"
+    }, {
+        "key": "tab",
+        "type": "radio",
+        "templateOptions": {
+            "type": "url",
+            "label": "How should the visitor be redirected?",
+            "options": [{
+                "name": "On the same tab",
+                "value": "same"
+            }, {
+                "name": "One a new tab",
+                "value": "newtab"
+            }]
+        },
+        "hideExpression": "(model.yesaction != 'redirect')"
+    }]
+}
