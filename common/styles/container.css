@@ -4,8 +4,20 @@
 	background: url(../images/transpbg.png) repeat top left;
 	top:0px;
 	position: fixed;
+	z-index: 9999 !important;
 }
 
+.tupuk-layout-side-slider{
+	color:black;
+	width: 50%;
+	float: right;
+	display: block;
+	height: 100vh;
+	background-color: white;
+	-webkit-box-shadow: 3px 0px 4px -1px rgba(0,0,0,0.75);
+	-moz-box-shadow: 3px 0px 4px -1px rgba(0,0,0,0.75);
+	box-shadow: 3px 0px 4px -1px rgba(0,0,0,0.75);
+}
 
 
 @media only screen and (min-width: 768px) {
